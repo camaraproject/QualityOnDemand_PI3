@@ -1,0 +1,31 @@
+configuration:
+  compName: CAMARA QoD API service # the name of this component
+  service: # Service-based interface information
+    scheme: http # the protocol (http or https)
+    registerDomainName: qodservice # IP used to advertise to others
+    bindingDomainName: qodservice # IP used to bind the service
+    port: 9000              # port used to bind the service
+    #notifyPort: 9001        # port used to receive notifications. If this is not configured, QoD will not subscribe to notifications from NEF
+  db:       # DB configurations
+    name: nftest                  # name of the mongodb
+    url: mongodb://mongodb:27017 # a valid URL of the mongodb
+  oauth2Service: # OAuth2 service related settings (QoD's incoming requests)
+    authServerUrl: http://oauthserver:8080/realms/sfn.camara # The OAuth2 Server URL that will be used to verify the access token
+    audience: [ 'sfn.camara' ]
+    authorizedScope: ['GET','POST','DELETE']
+  oauth2Client: # OAuth2 client settings (QoD's outgoing requests towards NEF) - TODO: Update according to your setup
+    tokenUrl: https://URL/that/provides/accesstokens
+    clientId: yourClientId # The one assigned to you by the NEF provider
+    clientSecret: yourClientSecret # The one assigned to you by the NEF provider
+  nef: # TODO: Update according to your setup
+    scheme: https
+    serviceDomainName: nef.provider.url # The one assigned to you by the NEF provider
+    serviceName: 3gpp-as-session-with-qos/v1
+    suppFeatures: 0
+    timeoutSecs: 10 # Http Client timeout while waiting for response
+
+# the kind of log output
+  # logLevel: how detailed to output, value: debug, info, warn, error, fatal, panic
+logger:
+  qodService:
+    logLevel: debug

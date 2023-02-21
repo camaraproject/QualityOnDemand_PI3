@@ -1,0 +1,66 @@
+version: '3.4'
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:20.0.1
+    hostname: oauthserver
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    command:
+      - start-dev
+      - --import-realm
+    ports:
+      - 8082:8080 # Host:Container
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 25s # Adjust according to system slowness
+      timeout: 30s
+      retries: 5
+      start_period: 10s
+    networks:
+      - qod-network
+    volumes:
+      - ../../resources/keycloak:/opt/keycloak/data/import # Import a realm with 'nftest' as configured clientId for QoDClient
+
+  mongo:
+    image: mongo:4.4.18
+    hostname: mongodb
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    ports:
+      - 64001:27107 # Host:Container
+    networks:
+      - qod-network
+
+  mongoprovision:
+    image: mongo:4.4.18
+    depends_on:
+      - mongo
+    restart: "no"
+    entrypoint: [ "bash", "-c", "sleep 2 && mongo --host mongodb:27017 /tmp/camara-qod-provision.js"] # 'nftest' is the db name. Should match with qodservice_cfg file configuration->db->name
+    volumes:
+      - ../../resources/mongodb/camara-qod-provision.js:/tmp/camara-qod-provision.js # Script to provision the DB
+    networks:
+      - qod-network
+    
+  qodservice:
+    build: ../../qodservice
+    image: qodservice:latest
+    hostname: qodservice
+    stdin_open: true
+    tty: true
+    ports:
+      - 64002:9000 # Host:Container
+    depends_on:
+      - mongoprovision
+    networks:
+      - qod-network
+
+networks:
+  qod-network:
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.40.0/24

@@ -1,0 +1,15 @@
+# Ignore all
+*
+#
+# # Unignore all with extensions
+!*.*
+!Dockerfile
+!Makefile
+#
+# # Unignore all dirs
+!*/
+bin/
+
+# VIM backup files
+.*.sw?
+*.log
